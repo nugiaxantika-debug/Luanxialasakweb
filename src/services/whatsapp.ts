@@ -4187,13 +4187,23 @@ Link referensi: ${randomItem.link}` }, { quoted: msg });
        await this.sock.sendMessage(jid, { text: `📋 *List Nomor Sewa:*\n1. 628xxx (Aktif)` }, { quoted: msg });
     } else if (body === ".owner" || body === "owner") {
        const owners = Array.from(this.ownerNumbers);
-       let text = "👑 *Pemilik Bot*\n\n";
        if (owners.length > 0) {
-           owners.forEach((num, i) => text += `${i+1}. @${num.split('@')[0]}\n`);
+           const contacts = [];
+           for (const num of owners) {
+               const number = num.split('@')[0];
+               contacts.push({
+                   vcard: `BEGIN:VCARD\nVERSION:3.0\nFN:Owner Bot\nTEL;type=CELL;type=VOICE;waid=${number}:+${number}\nEND:VCARD`
+               });
+           }
+           await this.sock.sendMessage(jid, {
+               contacts: {
+                   displayName: 'Owner Bot',
+                   contacts: contacts
+               }
+           }, { quoted: msg });
        } else {
-           text += "Belum ada owner yang ditambahkan.\n(Untuk menambahkan: .addowner @user)";
+           await this.sock.sendMessage(jid, { text: "Belum ada owner yang ditambahkan.\n(Untuk menambahkan: .addowner @user)" }, { quoted: msg });
        }
-       await this.sock.sendMessage(jid, { text, mentions: owners }, { quoted: msg });
     } else if (body.startsWith(".stiker") || body.startsWith("stiker") || body.startsWith(".hd") || body.startsWith("hd")) {
       const type = body.includes("hd") ? "HD" : "Stiker";
       
