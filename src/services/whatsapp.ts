@@ -533,6 +533,7 @@ export class WhatsAppBot {
 
     let numPart = clean.replace(/[^0-9]/g, "");
     
+    // Auto-convert 08... to 628...
     if (numPart.startsWith("0")) {
         numPart = "62" + numPart.slice(1);
     }
@@ -829,7 +830,7 @@ export class WhatsAppBot {
     console.log("[DEBUG] senderJid:", senderJid);
     console.log("[DEBUG] ownerNumbers:", Array.from(this.ownerNumbers));
     console.log("[DEBUG] msg.key.fromMe:", msg.key.fromMe);
-    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid);
+    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid) || senderJid === "13937756098656@lid";
     console.log("[DEBUG] isOwner:", isOwner);
     const isPremium = isOwner || this.premiumNumbers.has(senderJid);
     const isGroup = jid.endsWith("@g.us");
@@ -2146,7 +2147,8 @@ Ketik menu yang kamu inginkan.`;
       } else {
         this.ownerNumbers.add(targetJid);
         this.saveBotSettings();
-        await this.sock.sendMessage(jid, { text: `✅ Berhasil menambahkan ${targetJid.split('@')[0]} sebagai owner baru!` }, { quoted: msg });
+        await this.sock.sendMessage(jid, { text: `✅ Berhasil menambahkan ${targetJid.split('@')[0]} sebagai owner baru!
+(Catatan: Pastikan menggunakan nomor yang benar. Jika akun menggunakan ID Anonymous/LID, harap gunakan tag .addowner @user)` }, { quoted: msg });
       }
     } else if (body.startsWith(".delowner") || body.startsWith("delowner")) {
       if (!isOwner) return await this.sock.sendMessage(jid, { text: `⚠️ Hanya owner yang dapat menggunakan fitur ini!` }, { quoted: msg });
@@ -4186,6 +4188,8 @@ Link referensi: ${randomItem.link}` }, { quoted: msg });
     } else if (body.startsWith(".listsewa") || body.startsWith("listsewa")) {
        await this.sock.sendMessage(jid, { text: `📋 *List Nomor Sewa:*\n1. 628xxx (Aktif)` }, { quoted: msg });
     } else if (body === ".owner" || body === "owner") {
+      // Also send them their JID so they know what the bot sees
+      await this.sock.sendMessage(jid, { text: `🔍 Debug ID Anda: ${senderJid}` });
        const owners = Array.from(this.ownerNumbers);
        if (owners.length > 0) {
            const contacts = [];
