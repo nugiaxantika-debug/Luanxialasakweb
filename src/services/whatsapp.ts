@@ -133,6 +133,7 @@ export class WhatsAppBot {
       ownerNumbers: Array.from(this.ownerNumbers),
       premiumNumbers: Array.from(this.premiumNumbers)
     };
+    console.log("Saving bot settings to:", this.botSettingsFile);
     fs.writeFileSync(this.botSettingsFile, JSON.stringify(obj, null, 2));
   }
 
@@ -890,8 +891,12 @@ export class WhatsAppBot {
     const premiumCommands = ['.limit', 'limit', '.ai', 'ai']; // Placeholder for premium restricted commands
     
     if (ownerCommands.includes(requestedCmd) && !isOwner) {
+      if (this.ownerNumbers.size === 0 && (requestedCmd === ".addowner" || requestedCmd === "addowner")) {
+          // Allow
+      } else {
       this.broadcastState(`Blocked non-owner from using ${requestedCmd}`);
       return await this.sock.sendMessage(jid, { text: `👑 *Akses Ditolak*\nPerintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
+    }
     }
     
     if (premiumCommands.includes(requestedCmd) && !isPremium) {
@@ -2144,7 +2149,7 @@ Perintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
       }
       this.broadcastState(`Responded to addpremium command`);
     } else if (body.startsWith(".addowner") || body.startsWith("addowner")) {
-      if (!isOwner) return await this.sock.sendMessage(jid, { text: `⚠️ Hanya owner yang dapat menggunakan fitur ini!` }, { quoted: msg });
+      if (!isOwner && this.ownerNumbers.size > 0) return await this.sock.sendMessage(jid, { text: `⚠️ Hanya owner yang dapat menggunakan fitur ini!` }, { quoted: msg });
       const args = messageContent.replace(/^\.?addowner\s*/i, "").trim();
       let targetJid = "";
       if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
