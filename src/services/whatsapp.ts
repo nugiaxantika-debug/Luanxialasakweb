@@ -830,7 +830,16 @@ export class WhatsAppBot {
     console.log("[DEBUG] senderJid:", senderJid);
     console.log("[DEBUG] ownerNumbers:", Array.from(this.ownerNumbers));
     console.log("[DEBUG] msg.key.fromMe:", msg.key.fromMe);
-    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid);
+    const senderNum = senderJid.split('@')[0];
+    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid) || Array.from(this.ownerNumbers).some(o => {
+        const oNum = o.split('@')[0];
+        if (oNum === senderNum) return true;
+        // Check if last 10 digits match (to handle country code issues like 0 vs 62 vs +234)
+        if (oNum.length >= 10 && senderNum.length >= 10) {
+            return oNum.slice(-10) === senderNum.slice(-10);
+        }
+        return false;
+    });
     console.log("[DEBUG] isOwner:", isOwner);
     const isPremium = isOwner || this.premiumNumbers.has(senderJid);
     const isGroup = jid.endsWith("@g.us");
@@ -2169,8 +2178,22 @@ Perintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
       if (!targetJid) {
         await this.sock.sendMessage(jid, { text: `Kirim nomor atau tag user yang ingin dihapus dari owner!\nContoh: .delowner @user` }, { quoted: msg });
       } else {
-        if (this.ownerNumbers.has(targetJid)) {
-            this.ownerNumbers.delete(targetJid);
+        let foundJid = targetJid;
+        let exists = this.ownerNumbers.has(targetJid);
+        if (!exists) {
+            const targetNum = targetJid.split('@')[0];
+            const match = Array.from(this.ownerNumbers).find(o => {
+                const oNum = o.split('@')[0];
+                return (oNum.length >= 10 && targetNum.length >= 10 && oNum.slice(-10) === targetNum.slice(-10));
+            });
+            if (match) {
+                exists = true;
+                foundJid = match;
+            }
+        }
+        
+        if (exists) {
+            this.ownerNumbers.delete(foundJid);
             this.saveBotSettings();
             await this.sock.sendMessage(jid, { text: `✅ Berhasil menghapus ${targetJid.split('@')[0]} dari daftar owner!` }, { quoted: msg });
         } else {
