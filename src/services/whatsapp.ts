@@ -830,7 +830,7 @@ export class WhatsAppBot {
     console.log("[DEBUG] senderJid:", senderJid);
     console.log("[DEBUG] ownerNumbers:", Array.from(this.ownerNumbers));
     console.log("[DEBUG] msg.key.fromMe:", msg.key.fromMe);
-    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid) || senderJid === "13937756098656@lid";
+    const isOwner = msg.key.fromMe || this.ownerNumbers.has(senderJid);
     console.log("[DEBUG] isOwner:", isOwner);
     const isPremium = isOwner || this.premiumNumbers.has(senderJid);
     const isGroup = jid.endsWith("@g.us");
@@ -1134,6 +1134,8 @@ Ketik menu yang kamu inginkan.`;
       await this.sock.sendMessage(jid, { text: gameText }, { quoted: msg });
       this.broadcastState(`Responded to gamemenu command`);
     } else if (body === "ownermenu" || body === ".ownermenu" || body === "owner menu" || body === ".owner menu") {
+      if (!isOwner) return await this.sock.sendMessage(jid, { text: `👑 *Akses Ditolak*
+Perintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
       const ownerText = `👑 *Owner Menu*
 
 │ .broadcast
@@ -2099,6 +2101,7 @@ Ketik menu yang kamu inginkan.`;
           this.activeGames.delete("werewolf_" + jid);
        }
     } else if (body.startsWith(".broadcast") || body.startsWith("broadcast")) {
+      if (!isOwner) return await this.sock.sendMessage(jid, { text: `👑 *Akses Ditolak*\nPerintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
       const text = body.replace(/^\.?broadcast\s/i, "").trim();
       if (!text) {
           await this.sock.sendMessage(jid, { text: `Gunakan perintah dengan menyertakan pesan.\nContoh: .broadcast Halo semuanya!` }, { quoted: msg });
@@ -2107,6 +2110,7 @@ Ketik menu yang kamu inginkan.`;
       }
       this.broadcastState(`Responded to broadcast command`);
     } else if (body === ".restartbot" || body === "restartbot") {
+      if (!isOwner) return await this.sock.sendMessage(jid, { text: `👑 *Akses Ditolak*\nPerintah ini hanya bisa digunakan oleh Owner!` }, { quoted: msg });
       await this.sock.sendMessage(jid, { text: `🔄 *Restarting...*\n\nBot sedang dimulai ulang. Harap tunggu sebentar.` }, { quoted: msg });
       this.broadcastState(`Responded to restartbot command`);
       setTimeout(() => this.restart(), 1000);
@@ -4188,6 +4192,7 @@ Link referensi: ${randomItem.link}` }, { quoted: msg });
     } else if (body.startsWith(".listsewa") || body.startsWith("listsewa")) {
        await this.sock.sendMessage(jid, { text: `📋 *List Nomor Sewa:*\n1. 628xxx (Aktif)` }, { quoted: msg });
     } else if (body === ".owner" || body === "owner") {
+      await this.sock.sendMessage(jid, { text: `🔍 Debug JID:\nsenderJid: ${senderJid}\nparticipant: ${msg.key.participant}\nremoteJid: ${msg.key.remoteJid}` });
       // Also send them their JID so they know what the bot sees
       await this.sock.sendMessage(jid, { text: `🔍 Debug ID Anda: ${senderJid}` });
        const owners = Array.from(this.ownerNumbers);
